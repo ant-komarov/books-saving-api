@@ -9,14 +9,8 @@ class Author(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), unique=True)
-    slug_name = Column(String(511))
 
     books = relationship("Book", back_populates="author")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.slug_name = slugify(self.name) # type: ignore
-
 
 
 class Genre(Base):
