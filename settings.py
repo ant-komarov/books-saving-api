@@ -6,6 +6,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./books.db"
 
+    UPLOADED_FILES_PATH = "uploads/"
+
     class Config:
         case_sensitive = True
         env_file = ".env"
