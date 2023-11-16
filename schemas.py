@@ -34,7 +34,7 @@ class Author(AuthorBase):
 
 class BookBase(BaseModel):
     title: str
-    publish_date: date
+    date_published: date
 
 
 class BookCreate(BookBase):
