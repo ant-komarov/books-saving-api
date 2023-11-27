@@ -45,21 +45,49 @@ async def get_author_by_name(db: AsyncSession, name: str):
 #  Book functions
 async def create_book(db: AsyncSession, book: schemas.BookCreate):
     book_db = book.model_dump()
+    del book_db["file"]
     book_title = book_db.get("title")
-    book_db["slug_title"] = slugify(book_title) # type: ignore
-    query = insert(models.Book).values(**book_db)
-    return await db.execute(query)
+    book_db["slug_title"] = slugify(book_title)  # type: ignore
+    query = insert(models.Book).values(**book_db).returning(models.Book)
+    result = await db.execute(query)
+    return result.scalar_one()
 
 
 async def get_books(db: AsyncSession, skip: int = 0, limit: int = 10):
     query = (
         select(models.Book)
-        .options(
-            selectinload(models.Book.author),
-            selectinload(models.Book.genre)
-        )
+        .options(selectinload(models.Book.author), selectinload(models.Book.genre))
         .offset(skip)
         .limit(limit)
     )
     books_list = await db.execute(query)
     return [book[0] for book in books_list.fetchall()]
+
+
+async def get_book_by_title(db: AsyncSession, title: str):
+    query = select(models.Book).filter(models.Book.title == title)
+    result = await db.execute(query)
+    return result.scalar_one_or_none()
+
+
+async def get_book_by_id(db: AsyncSession, book_id: int):
+    query = select(models.Book).filter(models.Book.id == book_id)
+    result = await db.execute(query)
+    return result.scalar_one_or_none()
+
+
+async def get_books_by_authors_or_titles(db: AsyncSession, authors: list, titles: list):
+    subquery = (
+        select(models.Book.id)
+        .join(models.Author, models.Author.id==models.Book.author_id)
+        .filter(models.Author.name.in_(authors) | models.Book.title.in_(titles))
+        .distinct()
+    )
+
+    result = await db.execute(
+        select(models.Book)
+        .filter(models.Book.id.in_(subquery))
+    )
+
+    books = result.scalars().all()
+    return books

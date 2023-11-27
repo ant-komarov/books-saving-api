@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from db.database import Base
 
@@ -30,6 +30,7 @@ class Book(Base):
     genre_id = Column(Integer, ForeignKey("genres.id"))
     date_published = Column(Date)
     slug_title = Column(String(511))
+    read_only = Column(Boolean, default=False)
 
     author = relationship("Author", back_populates="books")
     genre = relationship("Genre", back_populates="books")
