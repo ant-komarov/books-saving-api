@@ -23,7 +23,6 @@ def delete_file_from_uploads(file_name):
         print(e)
 
 
-# Format filename
 def format_filename(title: str):
     return slugify(title)
 
@@ -35,7 +34,6 @@ def get_path_to_file(filename: str, file_id):
 def get_authors_list_from_xls(file_path):
     workbook = openpyxl.load_workbook(file_path, read_only=True)
     first_sheet = workbook.worksheets[0]
-    # workbook.close()
 
     return [cell for row in first_sheet.iter_rows(values_only=True) for cell in row]  # type: ignore
 
@@ -43,7 +41,6 @@ def get_authors_list_from_xls(file_path):
 def get_titles_list_from_xls(file_path):
     workbook = openpyxl.load_workbook(file_path, read_only=True)
     second_sheet = workbook.worksheets[1]
-    # workbook.close()
 
     return [
         cell for row in second_sheet.iter_rows(values_only=True) for cell in row
