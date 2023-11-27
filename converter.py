@@ -14,11 +14,9 @@ def pdf_to_jpg(
     :param last_page: Number of last page to convert.
     :param resolution: Resolution in DPI (dots per inch).
     """
-    # poppler_path = r"/app/poppler/Library/bin"
 
     images_list = convert_from_path(
         pdf_path,
-        # poppler_path=poppler_path,
         first_page=first_page,
         last_page=last_page,  # type: ignore
         dpi=resolution,
