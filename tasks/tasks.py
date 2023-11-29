@@ -2,7 +2,7 @@ import os
 import logging
 from celery import Celery
 from converter import pdf_to_jpg
-from utils import get_authors_list_from_xls, get_titles_list_from_xls
+from utils import delete_file_from_uploads, get_authors_list_from_xls, get_titles_list_from_xls
 from crud import get_books_by_authors_or_titles
 from settings import settings
 from models import Book
@@ -33,6 +33,9 @@ def process_excel_file(file_path):
         db.commit()
         convert_file_to_images(book)
     db.close()
+
+    delete_file_from_uploads(file_path)
+
     logging.info("Done")
 
 
