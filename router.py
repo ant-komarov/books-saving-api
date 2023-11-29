@@ -4,8 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.dependencies import get_db
 import schemas
 import crud
-from tasks import process_excel_file
-from utils import delete_file_from_uploads, save_file_to_uploads, get_path_to_file, create_html_page
+from tasks.tasks import process_excel_file
+from utils import (
+    save_file_to_uploads,
+    get_path_to_file,
+    create_html_page,
+)
 
 
 router = APIRouter()
@@ -65,38 +69,34 @@ async def create_book(
 ):
     async with db.begin():
         new_book = await crud.create_book(db, book)
-        await save_file_to_uploads(file=book.file, filename=new_book.slug_title, file_id=new_book.id)
+        await save_file_to_uploads(
+            file=book.file, filename=new_book.slug_title, file_id=new_book.id
+        )
     return {"message": "New book successfully added"}
 
 
 @router.get("/books/{book_id}/")
 async def get_book(book_id: int, db: AsyncSession = Depends(get_db)):
     db_book = await crud.get_book_by_id(db=db, book_id=book_id)
-    
-    if db_book.read_only: # type: ignore
+
+    if db_book.read_only:  # type: ignore
         html_content = create_html_page(db_book)
 
         return HTMLResponse(content=html_content, status_code=200)
-    
+
     file_path = get_path_to_file(db_book.slug_title, book_id)  # type: ignore
 
     return FileResponse(path=file_path, headers={"Content-Disposition": "inline"})
 
 
 @router.post("/upload/excel/")
-async def upload_excel_file(file: UploadFile = File(...)):
+def upload_excel_file(file: UploadFile = File(...)):
     with file.file as f:
         content = f.read()
 
     with open(file.filename, "wb") as tmp_file:  # type: ignore
         tmp_file.write(content)
 
-    await process_excel_file(tmp_file.name)
-    
-    delete_file_from_uploads(file.filename)
-    
-    return {"message": "Done"}
+    task = process_excel_file.delay(tmp_file.name)
 
-    # task = process_excel_file.apply_async(args=[tmp_file.name], countdown=10)
-
-    # return {"task_id": str(task.id)}
+    return {"task_id": str(task.id)}
