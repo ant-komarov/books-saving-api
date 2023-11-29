@@ -27,25 +27,40 @@ services:
     networks:
       - celery-redis-network
 
-#   redis:
-#     image: "redis:latest"
-#     ports:
-#       - "6379:6379"
-#     networks:
-#       - celery-redis-network
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - celery-redis-network
 
-#   celery:
-#     build: .
-#     command: celery -A tasks.app worker --uid=nobody --loglevel=info
-#     volumes:
-#       - .:/app
-#     depends_on:
-#       - redis
-#     networks:
-#       - celery-redis-network
-#     environment:
-#       - REDIS_HOST=redis-1
+  celery:
+    build: .
+    command: celery -A tasks.tasks.app worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    networks:
+      - celery-redis-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
 
+  flower:
+    build: .
+    ports:
+      - "5555:5555"
+    command: celery -A tasks.tasks.app flower
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    networks:
+      - celery-redis-network
+  
 networks:
   celery-redis-network:
     driver: bridge
