@@ -1,7 +1,7 @@
 from slugify.slugify import slugify
-from sqlalchemy import insert, select
+from sqlalchemy import insert, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Session
 import schemas
 import models
 
@@ -76,18 +76,11 @@ async def get_book_by_id(db: AsyncSession, book_id: int):
     return result.scalar_one_or_none()
 
 
-async def get_books_by_authors_or_titles(db: AsyncSession, authors: list, titles: list):
-    subquery = (
-        select(models.Book.id)
-        .join(models.Author, models.Author.id==models.Book.author_id)
-        .filter(models.Author.name.in_(authors) | models.Book.title.in_(titles))
-        .distinct()
+def get_books_by_authors_or_titles(db: Session, authors: list, titles: list):
+    result = (
+        db.query(models.Book)
+        .filter(or_(models.Book.title.in_(titles), models.Author.name.in_(authors)))
+        .options(selectinload(models.Book.author))
+        .all()
     )
-
-    result = await db.execute(
-        select(models.Book)
-        .filter(models.Book.id.in_(subquery))
-    )
-
-    books = result.scalars().all()
-    return books
+    return result
